@@ -1,2 +1,2 @@
-# generalised_linear_models
-Explore the difference between linear models and generalised linear models
+## Exploring Generalised Linear Models (GLM)
+In simple linear regression both variables are continuous real numbers. When our data has non-continuous values as response variables we use generalised linear models (GLM). These include logistic regression, where we have binary responses, and Poisson regression, where we have integer responses. Binary responses represent everything where the outcome is one of two outcomes, such as present/absent. Poisson regression is used especially for count data (e.g. the number of visits to a website per day). 
