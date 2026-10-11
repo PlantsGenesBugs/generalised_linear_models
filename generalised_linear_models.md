@@ -1,0 +1,24 @@
+GLM
+================
+PGB
+2026-10-11
+
+# Generalised Linear Models (GLM)
+
+In this file I will explore the abilities of Generalised Linear Models
+(GLM). In simple (or multivariate) linear regression, the inputs and
+outputs are both on a continuous scale, and their relationship are
+modelled as linear, meaning the expected output changes at a constant
+rate as the input changes, when other predictors are held constant. In
+generalised linear modelling, we give our inputs and outputs free reign,
+so that they can be non-continuous (and even categorical), while still
+imposing a linear relationship. The table below describes different
+types of models and their related inputs, outputs and response
+distribution.
+
+In order to apply linear modeling to data that is originally
+non-continuous, a link function connects the expected output to a linear
+model, allowing us to model outcomes such as binary values or counts.
+The link function transforms the conditional mean of the response
+variable onto a scale where it can be expressed as a linear function of
+the predictors.
