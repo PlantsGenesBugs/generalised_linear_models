@@ -16,6 +16,13 @@ imposing a linear relationship. The table below describes different
 types of models and their related inputs, outputs and response
 distribution.
 
+| Model | Input $X$ | Output $Y$ | Typical response distribution |
+|----|----|----|----|
+| Gaussian linear regression | Continuous or categorical | Continuous | Gaussian |
+| Logistic regression | Continuous or categorical | Binary (0/1) | Bernoulli / Binomial |
+| Poisson regression | Continuous or categorical | Discrete counts (0, 1, 2, …) | Poisson |
+| Gamma regression | Continuous or categorical | Positive continuous | Gamma |
+
 In order to apply linear modeling to data that is originally
 non-continuous, a link function connects the expected output to a linear
 model, allowing us to model outcomes such as binary values or counts.
