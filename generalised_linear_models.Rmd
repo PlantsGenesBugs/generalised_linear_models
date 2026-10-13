@@ -41,10 +41,10 @@ We relate \[\mu_i\] to \[\eta_i\] by transforming the expected value using the l
 
 The latent variable is a weighted linear combination of the covariates. It will be a real-valued vector. This is then transformed through the link function to relate to the response variable. The type of link function is determined by the type of output variable.
 
-## Logistic regression
+### Logistic regression
 When the outcome is binary (0/1), we use logistic regression and the logit link function to adapt the latent variable. The logit function can be written as log[mu_i/1-mu_i]. The inverse of the logit is the sigmoid function and can be written as 1/(1+exp(-latent)).
 
-## Poisson
+### Poisson
 Poisson regression concerns (positive) count data. Here the log link function is simply log(mu_i) with the inverse link as exp(latent).
 
 As with linear regression, GLM aims to find the best estimates for the regression coefficients given observed responses and features. And also, as with linear regression, we can use [ordinary least squares](https://github.com/PlantsGenesBugs/OLS_parameter_estimation) or [maximum likelihood estimation](https://github.com/PlantsGenesBugs/Max_Likelihood_Estimation) for these parameters. In some cases we might have to use iteratively reweighted least squares estimation. When doing MLE, an analytical solution is not possible, and therefore a numerical approach is used. 
@@ -90,12 +90,59 @@ mushroom_class_glm <- glm(class ~ cap_shape, family = binomial(link = logit),
 summary(mushroom_class_glm)
 
 ```
-The model returns an estimate of the regression coefficient for each covariate on the log-odds scale. In this case, the cap shape had 6 different factors and so the glm() function turned these into 6 individual covariates with either a 0 or 1 value assigned to them based on presence/absence in that particular mushroom. A positive coefficient means higher log-odds of being poisonous relative to the reference category. A negative coefficient means lower log-odds relative to the reference category.
+The model returns an estimate of the regression coefficient for each covariate on the log-odds scale. In this case, the cap shape had 6 different factors and so the glm() function turned these into 6 individual covariates with either a 0 or 1 value assigned to them based on presence/absence in that particular mushroom.  
 
-The 6 cap shapes are b, c, f, k, s and x. The intercept reflects the estimated log-odds of a mushroom being poisonous if it has cap shape b. Every other coefficient is relative to this. It is often easier to interpret these values when we convert them to odds ratios. To do this we will exponentiate the coefficient.
-```{r}
+For logistic regression the modelis:  
+\[
+\log\left(\frac{p_i}{1-p_i}\right)
+=\beta_0+\sum_j\beta_jx_{ij}.
+\]  
+
+The 6 cap shapes are b, c, f, k, s and x. A positive coefficient means higher log-odds of being poisonous relative to the reference category (intercept). A negative coefficient means lower log-odds relative to the reference category. While a coefficient was calculated for every category, the coefficients for cap shape c and s fall below the significance level - this is reflected in the large standard errors, which make the value for the coefficient include zero (no effect). The intercept reflects the estimated log-odds of a mushroom being poisonous if it has cap shape b (the reference). Every other coefficient is relative to this. It is often easier to interpret these values when we convert them to odds ratios. To do this we will exponentiate the coefficient:
+\[
+\operatorname{OR}_j=e^{\hat{\beta}_j}.
+\]
+
+where OR is the odds ratio for predictor j, calculated by exponentiating its estimated regression coefficient.
+```{r odds_ratios}
+# Odds ratios
+exp(coef(mushroom_class_glm))
+
+# Confidence intervals for odds ratios
+exp(confint(mushroom_class_glm))
+```
+
+This has returned a few warnings that "probabilities numerically 0 or 1 occurred". This is because the input features perfectly or almost perfectly separated the two classes. This is known as complete or quasi-complete separation, and means that the coefficients and p values should be considered with care. In addition the confidence interval for cap shape c returns an upper bound of NA, which means that we cannot use cap shape c in this instance.
+
+In this case, edible is coded as 0 and poisonous coded as 1. The baseline odds of a mushroom being poisonous if it has cap shape b is 0.119. Comparatively speaking, for a mushroom with cap shape f that the estimated odds of being poisonous are about 8.21 times those of the reference category, holding other predictors constant, and for cap shape k it is 22.15 times higher. We can also use these values to calculate the probability that the mushrooms are poisonous by using the equation:
+\[
+p=\frac{\text{odds}}{1+\text{odds}}
+\]
+
+So the baseline probability for being poisonous is 0.119/(1+0.119) = 0.106 or 10.6%. For cap shapes f and k it is 89.1% and 95.7%
+
+## GLM applied to genome wide association studies  
+
+```{r GWAS_setup}
+# load toy data containing SNP values in X and phenotype in y
+snp_data <- load("../GWAS_data_1.Rdata")
+
+# number of individuals == number of phenotypes (length of y)
+n <- length(y)
+
+# X is a matrix representing SNPS in each row, and the samples in different columns
+# number of SNPs == number of rows of feature matrix
+p <- nrow(X)
 
 ```
+
+We are going to compare each SNP, individually, to the outcome variable (which is binary, either healthy or diseased). This means several GLM regressions, using the logit link function. Because we are doing many comparisons in one go, we will have to adjust the p-values in order to mitigate for false positives. 
+
+```{r}
+
+
+```
+
 
 
 
