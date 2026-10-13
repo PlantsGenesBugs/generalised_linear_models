@@ -62,14 +62,14 @@ It will be a real-valued vector. This is then transformed through the
 link function to relate to the response variable. The type of link
 function is determined by the type of output variable.
 
-## Logistic regression
+### Logistic regression
 
 When the outcome is binary (0/1), we use logistic regression and the
 logit link function to adapt the latent variable. The logit function can
 be written as log\[mu_i/1-mu_i\]. The inverse of the logit is the
 sigmoid function and can be written as 1/(1+exp(-latent)).
 
-## Poisson
+### Poisson
 
 Poisson regression concerns (positive) count data. Here the log link
 function is simply log(mu_i) with the inverse link as exp(latent).
@@ -171,13 +171,143 @@ The model returns an estimate of the regression coefficient for each
 covariate on the log-odds scale. In this case, the cap shape had 6
 different factors and so the glm() function turned these into 6
 individual covariates with either a 0 or 1 value assigned to them based
-on presence/absence in that particular mushroom. A positive coefficient
-means higher log-odds of being poisonous relative to the reference
-category. A negative coefficient means lower log-odds relative to the
-reference category.
+on presence/absence in that particular mushroom.
 
-The 6 cap shapes are b, c, f, k, s and x. The intercept reflects the
-estimated log-odds of a mushroom being poisonous if it has cap shape b.
-Every other coefficient is relative to this. It is often easier to
-interpret these values when we convert them to odds ratios. To do this
-we will exponentiate the coefficient.
+For logistic regression the modelis:\
+$$
+\log\left(\frac{p_i}{1-p_i}\right)
+=\beta_0+\sum_j\beta_jx_{ij}.
+$$
+
+The 6 cap shapes are b, c, f, k, s and x. A positive coefficient means
+higher log-odds of being poisonous relative to the reference category
+(intercept). A negative coefficient means lower log-odds relative to the
+reference category. While a coefficient was calculated for every
+category, the coefficients for cap shape c and s fall below the
+significance level - this is reflected in the large standard errors,
+which make the value for the coefficient include zero (no effect). The
+intercept reflects the estimated log-odds of a mushroom being poisonous
+if it has cap shape b (the reference). Every other coefficient is
+relative to this. It is often easier to interpret these values when we
+convert them to odds ratios. To do this we will exponentiate the
+coefficient: $$
+\operatorname{OR}_j=e^{\hat{\beta}_j}.
+$$
+
+where OR is the odds ratio for predictor j, calculated by exponentiating
+its estimated regression coefficient.
+
+``` r
+# Odds ratios
+exp(coef(mushroom_class_glm))
+```
+
+    ##  (Intercept)   cap_shapec   cap_shapef   cap_shapek   cap_shapes   cap_shapex 
+    ## 1.188119e-01 1.782801e+07 8.205723e+00 2.214912e+01 3.973537e-06 7.379706e+00
+
+``` r
+# Confidence intervals for odds ratios
+exp(confint(mushroom_class_glm))
+```
+
+    ## Waiting for profiling to be done...
+
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+    ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+
+    ##                    2.5 %       97.5 %
+    ## (Intercept) 8.699505e-02  0.158485309
+    ## cap_shapec  1.908238e-15           NA
+    ## cap_shapef  6.098697e+00 11.290371736
+    ## cap_shapek  1.597621e+01 31.310505690
+    ## cap_shapes  2.135355e-26  0.007424654
+    ## cap_shapex  5.491045e+00 10.143797683
+
+This has returned a few warnings that “probabilities numerically 0 or 1
+occurred”. This is because the input features perfectly or almost
+perfectly separated the two classes. This is known as complete or
+quasi-complete separation, and means that the coefficients and p values
+should be considered with care. In addition the confidence interval for
+cap shape c returns an upper bound of NA, which means that we cannot use
+cap shape c in this instance.
+
+In this case, edible is coded as 0 and poisonous coded as 1. The
+baseline odds of a mushroom being poisonous if it has cap shape b is
+0.119. Comparatively speaking, for a mushroom with cap shape f that the
+estimated odds of being poisonous are about 8.21 times those of the
+reference category, holding other predictors constant, and for cap shape
+k it is 22.15 times higher. We can also use these values to calculate
+the probability that the mushrooms are poisonous by using the equation:
+$$
+p=\frac{\text{odds}}{1+\text{odds}}
+$$
+
+So the baseline probability for being poisonous is 0.119/(1+0.119) =
+0.106 or 10.6%. For cap shapes f and k it is 89.1% and 95.7%
+
+## GLM applied to genome wide association studies
+
+``` r
+# load toy data containing SNP values in X and phenotype in y
+snp_data <- load("../GWAS_data_1.Rdata")
+
+# number of individuals == number of phenotypes (length of y)
+n <- length(y)
+
+# X is a matrix representing SNPS in each row, and the samples in different columns
+# number of SNPs == number of rows of feature matrix
+p <- nrow(X)
+
+# samples that are controls are encoded as 0 in y
+control <- which(y == 0)
+# disease cases are encoded as 1 in y
+cases <- which(y == 1)
+```
+
+We are going to compare each SNP, individually, to the outcome variable
+(which is binary, either healthy or diseased). This means several GLM
+regressions, using the logit link function. Because we are doing many
+comparisons in one go, we will have to adjust the p-values in order to
+mitigate for false positives.
+
+``` r
+p_vals <- rep(0, p)
+
+for (j in 1:p) {
+  snp_data <- data.frame(y = y, x = X[j, ])
+  glm_fit <- glm(y ~ x, family = binomial(link = logit), data = snp_data)
+  p_vals[j] <- summary(glm_fit)$coefficients[2, 4]
+}
+
+adj_p_vals <- p.adjust(p_vals, "bonferroni")
+
+# create data.frame with p-values for plotting with ggplot
+p_val_df <- data.frame(p_val = adj_p_vals, idx = 1:p)
+
+ggplot(p_val_df, aes(x = idx, y = -log10(p_val))) +
+    geom_point(size = 2.5, col = "dodgerblue1") +
+    labs(y = "-log10(adjusted p-value)")
+```
+
+![](generalised_linear_models_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->

@@ -9,6 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 # Generalised Linear Models (GLM)
 
@@ -134,13 +135,32 @@ n <- length(y)
 # number of SNPs == number of rows of feature matrix
 p <- nrow(X)
 
+# samples that are controls are encoded as 0 in y
+control <- which(y == 0)
+# disease cases are encoded as 1 in y
+cases <- which(y == 1)
+
 ```
 
 We are going to compare each SNP, individually, to the outcome variable (which is binary, either healthy or diseased). This means several GLM regressions, using the logit link function. Because we are doing many comparisons in one go, we will have to adjust the p-values in order to mitigate for false positives. 
 
 ```{r}
+p_vals <- rep(0, p)
 
+for (j in 1:p) {
+  snp_data <- data.frame(y = y, x = X[j, ])
+  glm_fit <- glm(y ~ x, family = binomial(link = logit), data = snp_data)
+  p_vals[j] <- summary(glm_fit)$coefficients[2, 4]
+}
 
+adj_p_vals <- p.adjust(p_vals, "bonferroni")
+
+# create data.frame with p-values for plotting with ggplot
+p_val_df <- data.frame(p_val = adj_p_vals, idx = 1:p)
+
+ggplot(p_val_df, aes(x = idx, y = -log10(p_val))) +
+    geom_point(size = 2.5, col = "dodgerblue1") +
+    labs(y = "-log10(adjusted p-value)")
 ```
 
 
